@@ -63,6 +63,43 @@ class BibliotecaScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
+              Row(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF0E5FC),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.search,
+                        color: Color(0xFF5A458D),
+                        size: 28,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ),
+
+                  //const SizedBox(width: 12),
+
+                  /* Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.filter_list,
+                        color: Color(0xFF5A458D),
+                        size: 28,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ),*/
+                ],
+              ),
             ],
           ),
         ),
