@@ -4,6 +4,7 @@ import 'widgets/header_biblioteca.dart';
 import 'widgets/estatisticas_card.dart';
 import 'widgets/categorias_menu.dart';
 import 'widgets/filters_menu.dart';
+import 'widgets/book_grid.dart';
 
 class BibliotecaScreen extends StatelessWidget {
   const BibliotecaScreen({super.key});
@@ -33,6 +34,10 @@ class BibliotecaScreen extends StatelessWidget {
                 SizedBox(height: 17),
 
                 FiltersMenu(),
+
+                SizedBox(height: 17),
+
+                BookGrid(),
               ],
             ),
           ),

@@ -78,6 +78,7 @@ class FiltersMenu extends StatelessWidget {
   // ==============================================================
   // MINI-COMPONENTE: Linha Divisória
   // ==============================================================
+
   Widget _construirDivisoria() {
     return Container(
       width: 1,
