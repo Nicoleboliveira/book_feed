@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'widgets/header_biblioteca.dart';
 import 'widgets/estatisticas_card.dart';
 import 'widgets/categorias_menu.dart';
+import 'widgets/filters_menu.dart';
 
 class BibliotecaScreen extends StatelessWidget {
   const BibliotecaScreen({super.key});
@@ -28,6 +29,10 @@ class BibliotecaScreen extends StatelessWidget {
                 SizedBox(height: 25),
 
                 CategoriasMenu(),
+
+                SizedBox(height: 17),
+
+                FiltersMenu(),
               ],
             ),
           ),
