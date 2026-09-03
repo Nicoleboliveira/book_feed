@@ -43,8 +43,8 @@ class BookGrid extends StatelessWidget {
         ), // Arredondamento do cartão inteiro
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(
-              0.04,
+            color: Colors.black.withValues(
+              alpha: 0.04,
             ), // Sombra super suave e moderna
             blurRadius: 10,
             offset: const Offset(0, 4),

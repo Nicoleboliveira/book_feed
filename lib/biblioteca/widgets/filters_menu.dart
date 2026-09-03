@@ -76,19 +76,6 @@ class FiltersMenu extends StatelessWidget {
   }
 
   // ==============================================================
-  // MINI-COMPONENTE: Linha Divisória
-  // ==============================================================
-
-  Widget _construirDivisoria() {
-    return Container(
-      width: 1,
-      height: 16,
-      color: Colors.grey.shade300,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-    );
-  }
-
-  // ==============================================================
   // MINI-COMPONENTE: O Botão Individual
   // ==============================================================
   Widget _construirBotaoFiltro(
