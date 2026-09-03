@@ -21,6 +21,7 @@ class CustomBottomNav extends StatelessWidget {
         bottom: Radius.circular(25),
       ), // Arredonda só o topo!
       child: BottomNavigationBar(
+        elevation: 0,
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
 

@@ -7,10 +7,6 @@ class BookGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      // 1. Configurações essenciais para usar Grid dentro de um ScrollView
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-
       // 2. Quantos livros queremos renderizar (vamos simular 8)
       itemCount: 9,
 
@@ -34,25 +30,19 @@ class BookGrid extends StatelessWidget {
   // MINI-COMPONENTE: O Cartão individual do Livro
   // ==============================================================
   Widget _construirLivroCard() {
-    // 1. Envolvemos TUDO em um Container pai que será o "Cartão Branco"
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white, // O fundo branco que vai englobar tudo
-        borderRadius: BorderRadius.circular(
-          9,
-        ), // Arredondamento do cartão inteiro
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.04,
-            ), // Sombra super suave e moderna
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
 
-      // A MÁGICA: Garante que a imagem não vaze pelas quinas arredondadas do cartão
       clipBehavior: Clip.antiAlias,
 
       child: Column(

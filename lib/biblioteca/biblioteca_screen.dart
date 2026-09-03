@@ -22,25 +22,25 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 20.0,
-            ),
-            child: Column(
-              children: const [
-                HeaderBiblioteca(),
-                SizedBox(height: 25),
-                EstatisticasCard(),
-                SizedBox(height: 25),
-                CategoriasMenu(),
-                SizedBox(height: 17),
-                FiltersMenu(),
-                SizedBox(height: 17),
-                BookGrid(),
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: 20.0,
+            left: 24.0,
+            right: 24.0,
+            bottom: 0,
+          ),
+          child: Column(
+            children: const [
+              HeaderBiblioteca(),
+              SizedBox(height: 25),
+              EstatisticasCard(),
+              SizedBox(height: 25),
+              CategoriasMenu(),
+              SizedBox(height: 17),
+              FiltersMenu(),
+              SizedBox(height: 17),
+              Expanded(child: BookGrid()),
+            ],
           ),
         ),
       ),
