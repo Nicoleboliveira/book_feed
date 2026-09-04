@@ -2,26 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class BookGrid extends StatelessWidget {
-  const BookGrid({super.key});
+  final List<Map<String, dynamic>> livros;
+  const BookGrid({super.key, required this.livros});
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
       // 2. Quantos livros queremos renderizar (vamos simular 8)
-      itemCount: 9,
+      itemCount: livros.length,
 
       // 3. O 'CSS Grid' do Flutter
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3, // 4 colunas, exatamente como no seu design
-        childAspectRatio:
-            0.55, // A proporção: eles são mais altos do que largos
+        crossAxisCount: 3,
+        childAspectRatio: 0.55, // A proporção dos livros
         crossAxisSpacing: 12, // Espaço (gap) entre as colunas
         mainAxisSpacing: 16, // Espaço (gap) entre as linhas
       ),
 
       // 4. A função que constrói cada livro (nosso laço de repetição)
       itemBuilder: (context, index) {
-        return _construirLivroCard();
+        final livroAtual = livros[index];
+        return _construirLivroCard(livroAtual);
       },
     );
   }
@@ -29,7 +30,7 @@ class BookGrid extends StatelessWidget {
   // ==============================================================
   // MINI-COMPONENTE: O Cartão individual do Livro
   // ==============================================================
-  Widget _construirLivroCard() {
+  Widget _construirLivroCard(Map<String, dynamic> livro) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -52,11 +53,10 @@ class BookGrid extends StatelessWidget {
           Expanded(
             child: Container(
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(
-                    'https://m.media-amazon.com/images/I/71j0jmJKKIL._SL1500_.jpg',
-                  ),
+                  // capa que veio da API!
+                  image: NetworkImage(livro['capa']),
                   fit: BoxFit.cover,
                 ),
               ),

@@ -6,6 +6,7 @@ import 'widgets/categorias_menu.dart';
 import 'widgets/filters_menu.dart';
 import 'widgets/book_grid.dart';
 import 'widgets/custom_bottom_nav.dart';
+import '../services/books_api.dart';
 
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
@@ -15,8 +16,25 @@ class BibliotecaScreen extends StatefulWidget {
 }
 
 class _BibliotecaScreenState extends State<BibliotecaScreen> {
-  // 2. Nossa variável de estado (começa na aba 3: biblioteca)
   int _abaAtual = 3;
+
+  List<Map<String, dynamic>> _meusLivros = [];
+  bool _carregando = true; // Controla o Loading
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDadosDaApi();
+  }
+
+  Future<void> _carregarDadosDaApi() async {
+    final livrosDaApi = await BooksApi.buscarLivros();
+
+    setState(() {
+      _meusLivros = livrosDaApi;
+      _carregando = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,41 +48,46 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
             bottom: 0,
           ),
           child: Column(
-            children: const [
-              HeaderBiblioteca(),
-              SizedBox(height: 25),
-              EstatisticasCard(),
-              SizedBox(height: 25),
-              CategoriasMenu(),
-              SizedBox(height: 17),
-              FiltersMenu(),
-              SizedBox(height: 17),
-              Expanded(child: BookGrid()),
+            children: [
+              const HeaderBiblioteca(),
+              const SizedBox(height: 25),
+              const EstatisticasCard(),
+              const SizedBox(height: 25),
+              const CategoriasMenu(),
+              const SizedBox(height: 17),
+              const FiltersMenu(),
+              const SizedBox(height: 17),
+              Expanded(
+                child: _carregando
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF8C79B7),
+                        ),
+                      )
+                    : BookGrid(livros: _meusLivros),
+              ),
+
+              const SizedBox(height: 17),
             ],
           ),
         ),
       ),
 
-      // ==========================================
-      //  O BOTÃO FLUTUANTE ROXO
-      // ==========================================
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          BooksApi.buscarLivros();
+        },
         backgroundColor: const Color(0xFF8C79B7),
         shape: const CircleBorder(),
-        elevation: 0, // Tira a sombra para manter o design flat/clean
+        elevation: 0,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      // Diz para o botão se ancorar no centro da barra inferior
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
-      // ==========================================
-      // 4. CHAMADA DO SEU NOVO COMPONENTE
-      // ==========================================
       bottomNavigationBar: CustomBottomNav(
-        abaSelecionada: _abaAtual, // Passamos a aba atual como "prop"
+        abaSelecionada: _abaAtual,
         aoClicarNaAba: (indice) {
-          // O setState recarrega a tela com a nova aba clicada
           setState(() {
             _abaAtual = indice;
           });
