@@ -3,10 +3,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class BooksApi {
-  // Agora retornamos uma Lista de Mapas (como se fosse um Array de Objetos no JS)
   static Future<List<Map<String, dynamic>>> buscarLivros() async {
+    // Cole a sua chave gerada dentro das aspas abaixo:
+    const apiKey = 'AIzaSyAQb48kddEBjELC8fHaNpDIs-mde9un74Q';
+
+    // A nova URL já pede livros em português (langRestrict=pt)
     final url = Uri.parse(
-      'https://openlibrary.org/search.json?author=colleen+hoover',
+      'https://www.googleapis.com/books/v1/volumes?q=inauthor:"colleen+hoover"&langRestrict=pt&orderBy=relevance&maxResults=40&key=$apiKey',
     );
 
     try {
@@ -14,25 +17,36 @@ class BooksApi {
 
       if (resposta.statusCode == 200) {
         final dados = jsonDecode(resposta.body);
-        List<Map<String, dynamic>> listaLivros = []; // Nosso array vazio
+        List<Map<String, dynamic>> listaLivros = [];
 
-        // Um loop simples (for...of) para pegar todos os livros
-        for (var livro in dados['docs']) {
-          final coverId = livro['cover_i'];
+        // Verifica se a API realmente encontrou os itens
+        if (dados['items'] != null) {
+          for (var item in dados['items']) {
+            final volumeInfo = item['volumeInfo'];
+            final imageLinks = volumeInfo['imageLinks'];
 
-          listaLivros.add({
-            'titulo': livro['title'],
-            // Monta a URL da imagem, se houver um coverId. Senão, usa uma imagem em branco.
-            'capa': coverId != null
-                ? 'https://covers.openlibrary.org/b/id/$coverId-L.jpg'
-                : 'https://via.placeholder.com/150/E8E0F5/8C79B7?text=Sem+Capa',
-          });
+            final titulo = (volumeInfo['title'] as String? ?? '').toLowerCase();
+
+            if (imageLinks != null &&
+                imageLinks['thumbnail'] != null &&
+                !titulo.contains('box')) {
+              String capaSegura = imageLinks['thumbnail'].replaceAll(
+                'http:',
+                'https:',
+              );
+
+              listaLivros.add({
+                'titulo': volumeInfo['title'] ?? 'Sem Título',
+                'capa': capaSegura,
+              });
+            }
+          }
         }
-        return listaLivros; // Retorna os dados prontos!
+        return listaLivros;
       }
     } catch (erro) {
       print('Erro: $erro');
     }
-    return []; // Retorna vazio se der erro
+    return [];
   }
 }
