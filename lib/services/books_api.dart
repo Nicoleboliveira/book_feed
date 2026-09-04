@@ -3,13 +3,18 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class BooksApi {
-  static Future<List<Map<String, dynamic>>> buscarLivros() async {
+  static Future<List<Map<String, dynamic>>> buscarLivros(
+    String termoDeBusca,
+  ) async {
     // Cole a sua chave gerada dentro das aspas abaixo:
     const apiKey = 'AIzaSyAQb48kddEBjELC8fHaNpDIs-mde9un74Q';
 
+    // 2. Troca os espaços por '+' (ex: 'harry potter' vira 'harry+potter')
+    final buscaFormatada = termoDeBusca.replaceAll(' ', '+');
+
     // A nova URL já pede livros em português (langRestrict=pt)
     final url = Uri.parse(
-      'https://www.googleapis.com/books/v1/volumes?q=inauthor:"colleen+hoover"&langRestrict=pt&orderBy=relevance&maxResults=40&key=$apiKey',
+      'https://www.googleapis.com/books/v1/volumes?q=$buscaFormatada&langRestrict=pt&orderBy=relevance&maxResults=40&key=$apiKey',
     );
 
     try {

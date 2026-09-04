@@ -27,8 +27,13 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
     _carregarDadosDaApi();
   }
 
-  Future<void> _carregarDadosDaApi() async {
-    final livrosDaApi = await BooksApi.buscarLivros();
+  Future<void> _carregarDadosDaApi({String termo = 'Ali Hazelwood'}) async {
+    setState(() {
+      _carregando = true;
+    });
+
+    // Passamos o termo para a API
+    final livrosDaApi = await BooksApi.buscarLivros(termo);
 
     setState(() {
       _meusLivros = livrosDaApi;
@@ -49,7 +54,12 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
           ),
           child: Column(
             children: [
-              const HeaderBiblioteca(),
+              HeaderBiblioteca(
+                onBuscar: (termoDigitado) {
+                  // Quando o header avisar que houve busca, chamamos a API com a palavra nova!
+                  _carregarDadosDaApi(termo: termoDigitado);
+                },
+              ),
               const SizedBox(height: 25),
               const EstatisticasCard(),
               const SizedBox(height: 25),
@@ -74,9 +84,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          BooksApi.buscarLivros();
-        },
+        onPressed: () {},
         backgroundColor: const Color(0xFF8C79B7),
         shape: const CircleBorder(),
         elevation: 0,
