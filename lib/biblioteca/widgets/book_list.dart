@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'botao_status_livro.dart';
+
 class BookList extends StatelessWidget {
   final List<Map<String, dynamic>> livros;
 
@@ -42,22 +44,7 @@ class BookList extends StatelessWidget {
                   Positioned(
                     top: 2,
                     right: 2,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF8C79B7),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Color.fromARGB(240, 248, 245, 244),
-                          width: 1.0,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 10,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: BotaoStatusLivro(livro: livro),
                   ),
                 ],
               ),

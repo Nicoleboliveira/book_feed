@@ -82,6 +82,7 @@ class BooksApi {
               }
 
               listaLivros.add({
+                'id': item['id'],
                 'titulo': volumeInfo['title'] ?? 'Sem Título',
                 'capa': capaSegura,
                 'autor': autor,
