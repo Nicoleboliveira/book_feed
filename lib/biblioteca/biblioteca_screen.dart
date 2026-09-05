@@ -7,6 +7,7 @@ import 'widgets/filters_menu.dart';
 import 'widgets/book_grid.dart';
 import 'widgets/custom_bottom_nav.dart';
 import '../services/books_api.dart';
+import 'widgets/book_list.dart';
 
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
@@ -19,7 +20,8 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   int _abaAtual = 3;
 
   List<Map<String, dynamic>> _meusLivros = [];
-  bool _carregando = true; // Controla o Loading
+  bool _carregando = true;
+  bool _isGridView = true;
 
   @override
   void initState() {
@@ -65,7 +67,14 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
               const SizedBox(height: 25),
               const CategoriasMenu(),
               const SizedBox(height: 17),
-              const FiltersMenu(),
+              FiltersMenu(
+                isGridView: _isGridView,
+                onViewChanged: (isGrid) {
+                  setState(() {
+                    _isGridView = isGrid;
+                  });
+                },
+              ),
               const SizedBox(height: 17),
               Expanded(
                 child: _carregando
@@ -74,7 +83,11 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                           color: Color(0xFF8C79B7),
                         ),
                       )
-                    : BookGrid(livros: _meusLivros),
+                    : _isGridView
+                    ? BookGrid(
+                        livros: _meusLivros,
+                      ) // Se verdadeiro, mostra grade
+                    : BookList(livros: _meusLivros), // Se falso, mostra lista
               ),
 
               const SizedBox(height: 17),

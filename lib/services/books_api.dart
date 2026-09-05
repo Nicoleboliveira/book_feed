@@ -6,15 +6,13 @@ class BooksApi {
   static Future<List<Map<String, dynamic>>> buscarLivros(
     String termoDeBusca,
   ) async {
-    // Cole a sua chave gerada dentro das aspas abaixo:
+    // Cole a sua chave real aqui no seu arquivo:
     const apiKey = 'AIzaSyAQb48kddEBjELC8fHaNpDIs-mde9un74Q';
 
-    // 2. Troca os espaços por '+' (ex: 'harry potter' vira 'harry+potter')
     final buscaFormatada = termoDeBusca.replaceAll(' ', '+');
 
-    // A nova URL já pede livros em português (langRestrict=pt)
     final url = Uri.parse(
-      'https://www.googleapis.com/books/v1/volumes?q=$buscaFormatada&langRestrict=pt&orderBy=relevance&maxResults=40&key=$apiKey',
+      'https://www.googleapis.com/books/v1/volumes?q=$buscaFormatada&printType=books&langRestrict=pt&orderBy=relevance&maxResults=40&key=$apiKey',
     );
 
     try {
@@ -24,7 +22,9 @@ class BooksApi {
         final dados = jsonDecode(resposta.body);
         List<Map<String, dynamic>> listaLivros = [];
 
-        // Verifica se a API realmente encontrou os itens
+        List<String> palavrasDigitadas = termoDeBusca.toLowerCase().split(' ');
+        bool buscaAvancada = termoDeBusca.contains(':');
+
         if (dados['items'] != null) {
           for (var item in dados['items']) {
             final volumeInfo = item['volumeInfo'];
@@ -32,7 +32,38 @@ class BooksApi {
 
             final titulo = (volumeInfo['title'] as String? ?? '').toLowerCase();
 
-            if (imageLinks != null &&
+            // ==========================================
+            // CORREÇÃO: Subimos a extração do autor para cá!
+            // ==========================================
+            String autor = 'Autor desconhecido';
+            if (volumeInfo['authors'] != null &&
+                (volumeInfo['authors'] as List).isNotEmpty) {
+              autor = volumeInfo['authors'][0];
+            }
+            // Criamos a versão minúscula para usar na pesquisa
+            final autorMinusculo = autor.toLowerCase();
+
+            bool ehRelevante = buscaAvancada;
+
+            if (!buscaAvancada) {
+              for (String palavra in palavrasDigitadas) {
+                // Agora o autorMinusculo existe e pode ser lido aqui!
+                if (palavra.length > 2 &&
+                    (titulo.contains(palavra) ||
+                        autorMinusculo.contains(palavra))) {
+                  ehRelevante = true;
+                  break;
+                }
+              }
+            }
+
+            if (termoDeBusca.length <= 2) ehRelevante = true;
+
+            // ==========================================
+            // O Filtro Supremo
+            // ==========================================
+            if (ehRelevante &&
+                imageLinks != null &&
                 imageLinks['thumbnail'] != null &&
                 !titulo.contains('box')) {
               String capaSegura = imageLinks['thumbnail'].replaceAll(
@@ -40,9 +71,21 @@ class BooksApi {
                 'https:',
               );
 
+              // Pegando a categoria (Sem tradução, em inglês original)
+              List<String> tags = [];
+              if (volumeInfo['categories'] != null &&
+                  (volumeInfo['categories'] as List).isNotEmpty) {
+                String categoriaCrua = volumeInfo['categories'][0];
+                tags = categoriaCrua.split(' / ').take(2).toList();
+              } else {
+                tags = ['Geral'];
+              }
+
               listaLivros.add({
                 'titulo': volumeInfo['title'] ?? 'Sem Título',
                 'capa': capaSegura,
+                'autor': autor,
+                'tags': tags,
               });
             }
           }
