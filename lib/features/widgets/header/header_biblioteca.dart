@@ -34,8 +34,7 @@ class HeaderBiblioteca extends StatelessWidget {
               'seus livros, do seu jeito.',
               style: GoogleFonts.inter(
                 textStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
                   color: Color(0xFF6E6B78),
                 ),
               ),

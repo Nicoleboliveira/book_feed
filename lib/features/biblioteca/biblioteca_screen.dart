@@ -6,9 +6,10 @@ import '../widgets/header/estatisticas_card.dart';
 import '../widgets/controles/categorias_menu.dart';
 import '../widgets/controles/filters_menu.dart';
 import '../widgets/book_components/book_grid.dart';
-import '../../services/books_api.dart';
 import '../widgets/book_components/book_list.dart';
 import '../widgets/book_components/empty_state_biblioteca.dart';
+
+// ❌ O import 'books_api.dart' foi removido porque a API só vai morar no Explorar!
 
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
@@ -22,13 +23,13 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   bool _isGridView = true;
 
   // ==========================================
-  // 1. NOSSAS DUAS LISTAS E VARIÁVEIS DE CONTROLE
+  // 1. VARIÁVEIS DE CONTROLE LIMPAS
   // ==========================================
   List<Map<String, dynamic>> _livrosNuvem = []; // Livros salvos no seu banco
-  List<Map<String, dynamic>> _livrosPesquisa =
-      []; // Resultados da API do Google
 
-  bool _mostrandoResultadosBusca = false; // O nosso "interruptor"
+  // 👉 NOVA VARIÁVEL: Guarda o que você digitar na lupa da biblioteca!
+  String _termoBuscaLocal = '';
+
   String _abaSelecionada =
       'todos'; // Controla as abas (Todos, Lidos, Favoritos)
 
@@ -51,7 +52,6 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
 
       setState(() {
         _livrosNuvem = List<Map<String, dynamic>>.from(resposta);
-        _mostrandoResultadosBusca = false; // Garante que está mostrando o banco
         _carregando = false;
       });
     } catch (erro) {
@@ -60,43 +60,40 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
     }
   }
 
-  // ==========================================
-  // 3. FUNÇÃO GOOGLE API (Busca livros novos)
-  // ==========================================
-  Future<void> _carregarDadosDaApi({required String termo}) async {
-    setState(() {
-      _carregando = true;
-      _mostrandoResultadosBusca =
-          true; // Virou a chave! Agora vai mostrar a pesquisa.
-    });
-
-    final livrosDaApi = await BooksApi.buscarLivros(termo);
-
-    setState(() {
-      _livrosPesquisa = livrosDaApi;
-      _carregando = false;
-    });
-  }
+  // ❌ A função _carregarDadosDaApi foi removida! O Explorar cuida disso agora.
 
   // ==========================================
-  // 4. O FILTRO INTELIGENTE (Decide o que vai pra tela)
+  // 3. O NOVO FILTRO INTELIGENTE (Abas + Busca Local)
   // ==========================================
   List<Map<String, dynamic>> get _livrosExibidos {
-    // Se o usuário pesquisou algo na lupa, mostra a lista do Google
-    if (_mostrandoResultadosBusca) {
-      return _livrosPesquisa;
+    List<Map<String, dynamic>> filtrados;
+
+    // 1º Passo: Filtra pela aba (Todos, Lidos, Favoritos...)
+    if (_abaSelecionada == 'todos') {
+      filtrados = _livrosNuvem;
+    } else if (_abaSelecionada == 'favoritos') {
+      filtrados = _livrosNuvem
+          .where((livro) => livro['favorito'] == true)
+          .toList();
+    } else {
+      filtrados = _livrosNuvem
+          .where((livro) => livro['status'] == _abaSelecionada)
+          .toList();
     }
 
-    // Se não, mostra a sua biblioteca com os filtros das abas!
-    if (_abaSelecionada == 'todos') return _livrosNuvem;
+    // 2º Passo: Filtra pelo texto digitado na lupa (Busca Local Instantânea!)
+    if (_termoBuscaLocal.isNotEmpty) {
+      filtrados = filtrados.where((livro) {
+        final titulo = (livro['titulo'] ?? '').toString().toLowerCase();
+        final autor = (livro['autor'] ?? '').toString().toLowerCase();
+        final termo = _termoBuscaLocal.toLowerCase();
 
-    if (_abaSelecionada == 'favoritos') {
-      return _livrosNuvem.where((livro) => livro['favorito'] == true).toList();
+        // Se o termo estiver no título ou no autor, ele mostra o livro!
+        return titulo.contains(termo) || autor.contains(termo);
+      }).toList();
     }
 
-    return _livrosNuvem
-        .where((livro) => livro['status'] == _abaSelecionada)
-        .toList();
+    return filtrados;
   }
 
   @override
@@ -111,6 +108,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
     final int totalQueroLer = _livrosNuvem
         .where((livro) => livro['status'] == 'quero_ler')
         .length;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -124,12 +122,10 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
             children: [
               HeaderBiblioteca(
                 onBuscar: (termoDigitado) {
-                  // Se a pessoa apagar a busca (deixar vazio), voltamos para a biblioteca local
-                  if (termoDigitado.isEmpty) {
-                    _buscarLivrosDaNuvem();
-                  } else {
-                    _carregarDadosDaApi(termo: termoDigitado);
-                  }
+                  // 👉 A MÁGICA É AQUI: Não chama API, só atualiza a variável da busca local!
+                  setState(() {
+                    _termoBuscaLocal = termoDigitado;
+                  });
                 },
               ),
               const SizedBox(height: 25),
@@ -146,10 +142,9 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                 abaSelecionada: _abaSelecionada, // Passa a aba atual
                 onAbaSelecionada: (novaAba) {
                   setState(() {
-                    _abaSelecionada = novaAba; // Atualiza a tela quando clicar!
-                    _mostrandoResultadosBusca = false;
+                    _abaSelecionada = novaAba;
+                    _termoBuscaLocal = ''; // Limpa a busca ao trocar de aba!
                   });
-                  _buscarLivrosDaNuvem();
                 },
               ),
 
@@ -165,7 +160,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
               const SizedBox(height: 17),
 
               // ==========================================
-              // 5. RENDERIZAÇÃO DA LISTA CORRETA
+              // 4. RENDERIZAÇÃO DA LISTA CORRETA
               // ==========================================
               Expanded(
                 child: _carregando
@@ -175,21 +170,19 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                         ),
                       )
                     : _livrosExibidos.isEmpty
-                    // Mostra uma mensagem que nenhum livro foi encontrado
+                    // Mostra a sua mensagem bonitinha que nenhum livro foi encontrado
                     ? EmptyStateBiblioteca(
                         onExplorar: () {
-                          // Ação do botão: Voltar para a aba "Todos"
+                          // Ação do botão: Voltar para a aba "Todos" limpando a busca
                           setState(() {
                             _abaSelecionada = 'todos';
-                            _mostrandoResultadosBusca = false;
+                            _termoBuscaLocal = '';
                           });
                         },
                       )
                     : _isGridView
-                    ? BookGrid(
-                        livros: _livrosExibidos,
-                      ) // Usamos a variável inteligente aqui!
-                    : BookList(livros: _livrosExibidos), // E aqui!
+                    ? BookGrid(livros: _livrosExibidos)
+                    : BookList(livros: _livrosExibidos),
               ),
 
               const SizedBox(height: 17),
