@@ -9,6 +9,7 @@ import '../widgets/book_components/book_grid.dart';
 import '../../shared/custom_bottom_nav.dart';
 import '../../services/books_api.dart';
 import '../widgets/book_components/book_list.dart';
+import '../widgets/book_components/empty_state_biblioteca.dart';
 
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
@@ -176,8 +177,16 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                         ),
                       )
                     : _livrosExibidos.isEmpty
-                    // Mostra uma mensagem bonitinha se a lista estiver vazia
-                    ? const Center(child: Text('Nenhum livro encontrado =/'))
+                    // Mostra uma mensagem que nenhum livro foi encontrado
+                    ? EmptyStateBiblioteca(
+                        onExplorar: () {
+                          // Ação do botão: Voltar para a aba "Todos"
+                          setState(() {
+                            _abaSelecionada = 'todos';
+                            _mostrandoResultadosBusca = false;
+                          });
+                        },
+                      )
                     : _isGridView
                     ? BookGrid(
                         livros: _livrosExibidos,
