@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // NOVO: Import do Supabase
 
-import 'widgets/header_biblioteca.dart';
-import 'widgets/estatisticas_card.dart';
-import 'widgets/categorias_menu.dart';
-import 'widgets/filters_menu.dart';
-import 'widgets/book_grid.dart';
-import 'widgets/custom_bottom_nav.dart';
-import '../services/books_api.dart';
-import 'widgets/book_list.dart';
+import '../widgets/header/header_biblioteca.dart';
+import '../widgets/header/estatisticas_card.dart';
+import '../widgets/controles/categorias_menu.dart';
+import '../widgets/controles/filters_menu.dart';
+import '../widgets/book_components/book_grid.dart';
+import '../../shared/custom_bottom_nav.dart';
+import '../../services/books_api.dart';
+import '../widgets/book_components/book_list.dart';
 
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
