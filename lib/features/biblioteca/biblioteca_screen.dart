@@ -102,6 +102,16 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final int totalLivros = _livrosNuvem.length;
+    final int totalLidos = _livrosNuvem
+        .where((livro) => livro['status'] == 'lido')
+        .length;
+    final int totalLendo = _livrosNuvem
+        .where((livro) => livro['status'] == 'lendo')
+        .length;
+    final int totalQueroLer = _livrosNuvem
+        .where((livro) => livro['status'] == 'quero_ler')
+        .length;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -124,7 +134,12 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                 },
               ),
               const SizedBox(height: 25),
-              const EstatisticasCard(),
+              EstatisticasCard(
+                total: totalLivros,
+                lidos: totalLidos,
+                lendo: totalLendo,
+                queroLer: totalQueroLer,
+              ),
               const SizedBox(height: 25),
 
               // Aqui está o seu menu de abas (Todos, Lidos, Favoritos...)

@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class EstatisticasCard extends StatelessWidget {
-  const EstatisticasCard({super.key});
+  final int total;
+  final int lidos;
+  final int lendo;
+  final int queroLer;
+
+  const EstatisticasCard({
+    super.key,
+    required this.total,
+    required this.lidos,
+    required this.lendo,
+    required this.queroLer,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +96,7 @@ class EstatisticasCard extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    '73',
+                    total.toString(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
