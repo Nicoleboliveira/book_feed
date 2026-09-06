@@ -80,26 +80,28 @@ class BookList extends StatelessWidget {
                   // Renderizando as tags
                   Wrap(
                     spacing: 8,
-                    children: (livro['tags'] as List<String>).map((tag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0E5FC),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          tag.toString(),
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF5A458D),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                    children: (livro['tags'] as List<dynamic>? ?? [])
+                        .map<Widget>((tag) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0E5FC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              tag.toString(),
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF5A458D),
+                              ),
+                            ),
+                          );
+                        })
+                        .toList(),
                   ),
                 ],
               ),

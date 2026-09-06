@@ -66,6 +66,7 @@ class _BotaoStatusLivroState extends State<BotaoStatusLivro> {
               'capa': livro['capa'],
               'status': 'lido', // Por enquanto, vamos fixar como lido
               'favorito': true,
+              'tags': livro['tags'],
             });
             debugPrint('✅ Livro salvo na nuvem: ${livro['titulo']}');
           } else {
