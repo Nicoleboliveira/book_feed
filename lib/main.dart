@@ -1,8 +1,7 @@
+import 'package:book_feed/features/biblioteca/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'features/biblioteca/biblioteca_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +26,7 @@ class BookApp extends StatelessWidget {
 
         textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
       ),
-      home: const BibliotecaScreen(),
+      home: const MainScreen(),
     );
   }
 }

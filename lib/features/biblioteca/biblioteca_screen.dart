@@ -6,7 +6,6 @@ import '../widgets/header/estatisticas_card.dart';
 import '../widgets/controles/categorias_menu.dart';
 import '../widgets/controles/filters_menu.dart';
 import '../widgets/book_components/book_grid.dart';
-import '../../shared/custom_bottom_nav.dart';
 import '../../services/books_api.dart';
 import '../widgets/book_components/book_list.dart';
 import '../widgets/book_components/empty_state_biblioteca.dart';
@@ -19,7 +18,6 @@ class BibliotecaScreen extends StatefulWidget {
 }
 
 class _BibliotecaScreenState extends State<BibliotecaScreen> {
-  int _abaAtual = 3;
   bool _carregando = true;
   bool _isGridView = true;
 
@@ -198,22 +196,6 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF8C79B7),
-        shape: const CircleBorder(),
-        elevation: 0,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: CustomBottomNav(
-        abaSelecionada: _abaAtual,
-        aoClicarNaAba: (indice) {
-          setState(() {
-            _abaAtual = indice;
-          });
-        },
       ),
     );
   }
