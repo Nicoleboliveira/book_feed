@@ -15,6 +15,36 @@ class _BotaoStatusLivroState extends State<BotaoStatusLivro> {
   bool _isSelecionado = false;
 
   @override
+  void initState() {
+    super.initState();
+    _verificarStatusNoBanco();
+  }
+
+  Future<void> _verificarStatusNoBanco() async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      // Fazemos um SELECT buscando apenas este ID específico.
+      // O .maybeSingle() retorna o dado se achar, ou 'null' se o livro não estiver no banco.
+      final resposta = await supabase
+          .from('meus_livros')
+          .select('id')
+          .eq('id', widget.livro['id'])
+          .maybeSingle();
+
+      // Se a resposta não for nula, significa que o livro está salvo!
+      if (resposta != null) {
+        setState(() {
+          _isSelecionado = true; // Pinta o botão de roxo
+        });
+      }
+    } catch (erro) {
+      // Se a internet piscar, ele apenas falha silenciosamente e deixa o botão transparente
+      debugPrint('Aviso ao checar livro: $erro');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
@@ -37,26 +67,25 @@ class _BotaoStatusLivroState extends State<BotaoStatusLivro> {
               'status': 'lido', // Por enquanto, vamos fixar como lido
               'favorito': true,
             });
-            print('✅ Livro salvo na nuvem: ${livro['titulo']}');
+            debugPrint('✅ Livro salvo na nuvem: ${livro['titulo']}');
           } else {
             // Se desmarcou, DELETA do banco
             await supabase.from('meus_livros').delete().match({
               'id': livro['id'],
             });
-            print('🗑️ Livro removido da nuvem: ${livro['titulo']}');
+            debugPrint('🗑️ Livro removido da nuvem: ${livro['titulo']}');
           }
         } catch (erro) {
           // 3. Rollback: Se der erro (ex: sem internet), desfaz a cor do botão
           setState(() {
             _isSelecionado = !_isSelecionado;
           });
-          print('❌ Erro ao salvar no banco: $erro');
+          debugPrint('❌ Erro ao salvar no banco: $erro');
         }
       },
       child: Container(
         padding: const EdgeInsets.all(4), // O seu padding perfeito
         decoration: BoxDecoration(
-          // Se estiver marcado, pinta com o seu roxo. Se não, fica com o fundo transparente.
           color: _isSelecionado ? const Color(0xFF8C79B7) : Color(0xFFF0E5FC),
           shape: BoxShape.circle,
           border: Border.all(

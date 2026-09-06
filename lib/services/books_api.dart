@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 
 class BooksApi {
   static Future<List<Map<String, dynamic>>> buscarLivros(
@@ -94,7 +95,7 @@ class BooksApi {
         return listaLivros;
       }
     } catch (erro) {
-      print('Erro: $erro');
+      debugPrint('Erro: $erro');
     }
     return [];
   }
