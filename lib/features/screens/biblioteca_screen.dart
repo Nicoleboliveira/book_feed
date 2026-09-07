@@ -102,18 +102,31 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   List<Map<String, dynamic>> get _livrosExibidos {
     List<Map<String, dynamic>> filtrados;
 
-    if (_abaSelecionada == 'todos') {
+    // Converte a aba selecionada para minúsculo para evitar erros de digitação (ex: 'Lendo' vira 'lendo')
+    final abaNormalizada = _abaSelecionada.toLowerCase();
+
+    if (abaNormalizada == 'todos') {
       filtrados = _livrosNuvem;
-    } else if (_abaSelecionada == 'favoritos') {
+    } else if (abaNormalizada == 'favoritos') {
       filtrados = _livrosNuvem
           .where((livro) => livro['favorito'] == true)
           .toList();
-    } else {
+    }
+    // 👇 AQUI ESTÁ O SEGREDO DO EMPRESTADO: Ele olha para a coluna booleana!
+    else if (abaNormalizada == 'emprestados' ||
+        abaNormalizada == 'emprestado') {
       filtrados = _livrosNuvem
-          .where((livro) => livro['status'] == _abaSelecionada)
+          .where((livro) => livro['emprestado'] == true)
+          .toList();
+    }
+    // 👇 E AQUI FICA A REGRA PRO RESTO (lido, lendo, quero_ler, abandonado)
+    else {
+      filtrados = _livrosNuvem
+          .where((livro) => livro['status'] == abaNormalizada)
           .toList();
     }
 
+    // Filtro pelo texto digitado na lupa (Busca Local Instantânea!)
     if (_termoBuscaLocal.isNotEmpty) {
       filtrados = filtrados.where((livro) {
         final titulo = (livro['titulo'] ?? '').toString().toLowerCase();

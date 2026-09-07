@@ -44,7 +44,7 @@ class CategoriasMenu extends StatelessWidget {
               const SizedBox(width: 14),
               _construirAba('Emprestado', id: 'emprestado'),
               const SizedBox(width: 14),
-              _construirAba('Abandonei', id: 'abandonei'),
+              _construirAba('Abandonei', id: 'abandonado'),
               const SizedBox(width: 14),
             ],
           ),

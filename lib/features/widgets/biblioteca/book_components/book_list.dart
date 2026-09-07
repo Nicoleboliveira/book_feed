@@ -2,7 +2,7 @@ import 'package:book_feed/features/widgets/biblioteca/book_components/menu_opcoe
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'botao_status_livro.dart';
+import 'icon_status_livro.dart';
 
 class BookList extends StatelessWidget {
   final List<Map<String, dynamic>> livros;

@@ -66,7 +66,7 @@ class EstatisticasCard extends StatelessWidget {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '127',
+                          text: total.toString(),
                           style: GoogleFonts.inter(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -96,7 +96,7 @@ class EstatisticasCard extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    total.toString(),
+                    lidos.toString(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -118,7 +118,7 @@ class EstatisticasCard extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    '18',
+                    lendo.toString(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -140,7 +140,7 @@ class EstatisticasCard extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    '36',
+                    queroLer.toString(),
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
