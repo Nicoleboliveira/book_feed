@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // NOVO: Import do Supabase
 
-import '../widgets/header/header_biblioteca.dart';
-import '../widgets/header/estatisticas_card.dart';
-import '../widgets/controles/categorias_menu.dart';
-import '../widgets/controles/filters_menu.dart';
-import '../widgets/book_components/book_grid.dart';
-import '../widgets/book_components/book_list.dart';
-import '../widgets/book_components/empty_state_biblioteca.dart';
+import '../widgets/biblioteca/header/header_biblioteca.dart';
+import '../widgets/biblioteca/header/estatisticas_card.dart';
+import '../widgets/biblioteca/controles/categorias_menu.dart';
+import '../widgets/biblioteca/controles/filters_menu.dart';
+import '../widgets/biblioteca/book_components/book_grid.dart';
+import '../widgets/biblioteca/book_components/book_list.dart';
+import '../widgets/biblioteca/book_components/empty_state_biblioteca.dart';
 
 // ❌ O import 'books_api.dart' foi removido porque a API só vai morar no Explorar!
 

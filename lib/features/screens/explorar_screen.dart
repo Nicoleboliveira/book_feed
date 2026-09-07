@@ -1,4 +1,4 @@
-import 'package:book_feed/features/widgets/book_components/book_list.dart';
+import 'package:book_feed/features/widgets/biblioteca/book_components/book_list.dart';
 import 'package:book_feed/services/books_api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -55,6 +55,11 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
                     color: const Color(0xFF261C40),
                     height: 1.3,
                   ),
+                ),
+
+                IconButton(
+                  icon: const Icon(Icons.add, color: Color(0xFF261C40)),
+                  onPressed: () {},
                 ),
               ],
             ),
