@@ -88,6 +88,7 @@ class BooksApi {
                 'capa': capaSegura,
                 'autor': autor,
                 'tags': tags,
+                'nota': volumeInfo['averageRating'] ?? 0.0,
               });
             }
           }

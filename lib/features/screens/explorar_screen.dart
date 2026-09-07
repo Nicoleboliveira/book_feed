@@ -1,4 +1,4 @@
-import 'package:book_feed/features/widgets/biblioteca/book_components/book_list.dart';
+import 'package:book_feed/features/widgets/explorar/book_list_explorar.dart';
 import 'package:book_feed/services/books_api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -182,7 +182,14 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
     }
 
     // Renderiza a lista usando o seu componente da biblioteca (precisa do import do BookList)
-    return BookList(livros: _resultadosBusca);
+    return BookListExplorar(
+      livros: _resultadosBusca,
+      onAddBiblioteca: (livro, status) {
+        // Por enquanto, vamos só imprimir no console para ver se funciona!
+        debugPrint("Usuário quer adicionar o livro: ${livro['titulo']}");
+        debugPrint("Status escolhido: $status");
+      },
+    );
   }
 
   Widget _buildTelaInicialExplorar() {
