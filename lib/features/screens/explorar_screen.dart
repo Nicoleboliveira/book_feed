@@ -2,6 +2,7 @@ import 'package:book_feed/features/widgets/explorar/book_list_explorar.dart';
 import 'package:book_feed/services/books_api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ExplorarScreen extends StatefulWidget {
   const ExplorarScreen({super.key});
@@ -181,13 +182,56 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
       );
     }
 
-    // Renderiza a lista usando o seu componente da biblioteca (precisa do import do BookList)
     return BookListExplorar(
       livros: _resultadosBusca,
-      onAddBiblioteca: (livro, status) {
-        // Por enquanto, vamos só imprimir no console para ver se funciona!
-        debugPrint("Usuário quer adicionar o livro: ${livro['titulo']}");
-        debugPrint("Status escolhido: $status");
+      onAddBiblioteca: (livro, status) async {
+        try {
+          // 1. Prepara a conexão com o seu banco
+          final supabase = Supabase.instance.client;
+
+          // 2. Monta o pacote apenas com as colunas que o seu banco aceita
+          final dadosParaSalvar = {
+            'id': livro['id'],
+            'titulo': livro['titulo'],
+            'autor': livro['autor'],
+            'capa': livro['capa'],
+            'status': status, // 'lido' ou 'quero_ler' (veio do clique!)
+            'favorito': false, // Por padrão, começa sem ser favorito
+            // Se o seu banco tiver uma coluna para as tags ou notas, você pode adicionar aqui depois!
+          };
+
+          // 3. Envia para a tabela 'meus_livros'
+          await supabase.from('meus_livros').insert(dadosParaSalvar);
+
+          // 4. Mostra uma mensagem bonitinha de sucesso na tela
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${livro['titulo']} salvo na biblioteca!',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                ),
+                backgroundColor: const Color(0xFF8C79B7),
+                behavior: SnackBarBehavior.floating, // Fica flutuando na tela
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        } catch (erro) {
+          debugPrint("Erro ao salvar no Supabase: $erro");
+
+          // Opcional: Mensagem de erro para você saber o que houve
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ops! Erro ao salvar o livro.'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+        }
       },
     );
   }

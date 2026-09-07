@@ -9,8 +9,6 @@ import '../widgets/biblioteca/book_components/book_grid.dart';
 import '../widgets/biblioteca/book_components/book_list.dart';
 import '../widgets/biblioteca/book_components/empty_state_biblioteca.dart';
 
-// ❌ O import 'books_api.dart' foi removido porque a API só vai morar no Explorar!
-
 class BibliotecaScreen extends StatefulWidget {
   const BibliotecaScreen({super.key});
 
@@ -41,26 +39,34 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   }
 
   // ==========================================
-  // 2. FUNÇÃO SUPABASE (Busca sua biblioteca)
+  // 2. FUNÇÃO SUPABASE (Agora em TEMPO REAL!)
   // ==========================================
-  Future<void> _buscarLivrosDaNuvem() async {
+  void _buscarLivrosDaNuvem() {
     setState(() => _carregando = true);
 
-    try {
-      final supabase = Supabase.instance.client;
-      final resposta = await supabase.from('meus_livros').select();
+    final supabase = Supabase.instance.client;
 
-      setState(() {
-        _livrosNuvem = List<Map<String, dynamic>>.from(resposta);
-        _carregando = false;
-      });
-    } catch (erro) {
-      debugPrint('Erro ao buscar do Supabase: $erro');
-      setState(() => _carregando = false);
-    }
+    // 👉 A MÁGICA: Trocamos o .select() por .stream()
+    // Isso cria uma "rádio" ligada com o Supabase. Qualquer mudança lá, atualiza a tela aqui instantaneamente!
+    supabase
+        .from('meus_livros')
+        .stream(primaryKey: ['id'])
+        .listen((resposta) {
+          // O 'listen' fica ouvindo. Se um livro novo chegar, ele atualiza a lista sozinho.
+          if (mounted) {
+            setState(() {
+              _livrosNuvem = List<Map<String, dynamic>>.from(resposta);
+              _carregando = false;
+            });
+          }
+        })
+        .onError((erro) {
+          debugPrint('Erro na rádio do Supabase: $erro');
+          if (mounted) {
+            setState(() => _carregando = false);
+          }
+        });
   }
-
-  // ❌ A função _carregarDadosDaApi foi removida! O Explorar cuida disso agora.
 
   // ==========================================
   // 3. O NOVO FILTRO INTELIGENTE (Abas + Busca Local)
