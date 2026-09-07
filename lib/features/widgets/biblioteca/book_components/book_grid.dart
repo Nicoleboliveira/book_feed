@@ -1,3 +1,4 @@
+import 'package:book_feed/features/widgets/biblioteca/book_components/menu_opcoes_livro.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -5,23 +6,25 @@ import 'botao_status_livro.dart';
 
 class BookGrid extends StatelessWidget {
   final List<Map<String, dynamic>> livros;
-  const BookGrid({super.key, required this.livros});
+  final void Function(String id, String acao, {bool? valorEmprestimo})
+  onUpdateStatus;
+
+  const BookGrid({
+    super.key,
+    required this.livros,
+    required this.onUpdateStatus,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      // 2. Quantos livros queremos renderizar (vamos simular 8)
       itemCount: livros.length,
-
-      // 3. O 'CSS Grid' do Flutter
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        childAspectRatio: 0.55, // A proporção dos livros
-        crossAxisSpacing: 12, // Espaço (gap) entre as colunas
-        mainAxisSpacing: 16, // Espaço (gap) entre as linhas
+        childAspectRatio: 0.55,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
       ),
-
-      // 4. A função que constrói cada livro (nosso laço de repetição)
       itemBuilder: (context, index) {
         final livroAtual = livros[index];
         return _construirLivroCard(livroAtual);
@@ -33,6 +36,10 @@ class BookGrid extends StatelessWidget {
   // MINI-COMPONENTE: O Cartão individual do Livro
   // ==============================================================
   Widget _construirLivroCard(Map<String, dynamic> livro) {
+    // Puxa a nota real e formata (Ex: 4.8)
+    final double avaliacao = (livro['nota'] ?? 0).toDouble();
+    final String id = livro['id'].toString();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -45,9 +52,7 @@ class BookGrid extends StatelessWidget {
           ),
         ],
       ),
-
       clipBehavior: Clip.antiAlias,
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -57,8 +62,7 @@ class BookGrid extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  // capa que veio da API!
-                  image: NetworkImage(livro['capa']),
+                  image: NetworkImage(livro['capa'] ?? ''),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -80,12 +84,18 @@ class BookGrid extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Estrela e Nota Real
                 Row(
                   children: [
                     const Icon(Icons.star, size: 14, color: Color(0xFF8C79B7)),
                     const SizedBox(width: 4),
                     Text(
-                      '4,8',
+                      avaliacao
+                          .toStringAsFixed(1)
+                          .replaceAll(
+                            '.',
+                            ',',
+                          ), // Troca ponto por vírgula no visual
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -94,10 +104,13 @@ class BookGrid extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Icon(
-                  Icons.more_horiz,
-                  size: 16,
-                  color: Color(0xFF261C40),
+
+                // 👉 A MÁGICA AQUI: O Menu dos 3 Pontinhos
+                MenuOpcoesLivro(
+                  livro: livro, // No grid a variável se chama livroAtual, passe ela.
+                  onAction: (acao, {valorEmprestimo}) {
+                    onUpdateStatus(id, acao, valorEmprestimo: valorEmprestimo);
+                  },
                 ),
               ],
             ),

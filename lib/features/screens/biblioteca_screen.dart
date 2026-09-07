@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // NOVO: Import do Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/biblioteca/header/header_biblioteca.dart';
 import '../widgets/biblioteca/header/estatisticas_card.dart';
@@ -46,13 +46,10 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
 
     final supabase = Supabase.instance.client;
 
-    // 👉 A MÁGICA: Trocamos o .select() por .stream()
-    // Isso cria uma "rádio" ligada com o Supabase. Qualquer mudança lá, atualiza a tela aqui instantaneamente!
     supabase
         .from('meus_livros')
         .stream(primaryKey: ['id'])
         .listen((resposta) {
-          // O 'listen' fica ouvindo. Se um livro novo chegar, ele atualiza a lista sozinho.
           if (mounted) {
             setState(() {
               _livrosNuvem = List<Map<String, dynamic>>.from(resposta);
@@ -69,12 +66,42 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   }
 
   // ==========================================
+  // 👉 NOVA FUNÇÃO: Atualiza o status do livro no banco
+  // ==========================================
+  Future<void> _atualizarStatusLivro(
+    String idLivro,
+    String acao, {
+    bool? valorEmprestimo,
+  }) async {
+    try {
+      final supabase = Supabase.instance.client;
+
+      if (acao == 'mudar_emprestimo') {
+        await supabase
+            .from('meus_livros')
+            .update({'emprestado': valorEmprestimo})
+            .eq('id', idLivro);
+      }
+      // 👇 MÁGICA DA EXCLUSÃO AQUI:
+      else if (acao == 'excluir') {
+        await supabase.from('meus_livros').delete().eq('id', idLivro);
+      } else {
+        await supabase
+            .from('meus_livros')
+            .update({'status': acao})
+            .eq('id', idLivro);
+      }
+    } catch (erro) {
+      debugPrint('Erro ao atualizar banco: $erro');
+    }
+  }
+
+  // ==========================================
   // 3. O NOVO FILTRO INTELIGENTE (Abas + Busca Local)
   // ==========================================
   List<Map<String, dynamic>> get _livrosExibidos {
     List<Map<String, dynamic>> filtrados;
 
-    // 1º Passo: Filtra pela aba (Todos, Lidos, Favoritos...)
     if (_abaSelecionada == 'todos') {
       filtrados = _livrosNuvem;
     } else if (_abaSelecionada == 'favoritos') {
@@ -87,14 +114,12 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
           .toList();
     }
 
-    // 2º Passo: Filtra pelo texto digitado na lupa (Busca Local Instantânea!)
     if (_termoBuscaLocal.isNotEmpty) {
       filtrados = filtrados.where((livro) {
         final titulo = (livro['titulo'] ?? '').toString().toLowerCase();
         final autor = (livro['autor'] ?? '').toString().toLowerCase();
         final termo = _termoBuscaLocal.toLowerCase();
 
-        // Se o termo estiver no título ou no autor, ele mostra o livro!
         return titulo.contains(termo) || autor.contains(termo);
       }).toList();
     }
@@ -128,7 +153,6 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
             children: [
               HeaderBiblioteca(
                 onBuscar: (termoDigitado) {
-                  // 👉 A MÁGICA É AQUI: Não chama API, só atualiza a variável da busca local!
                   setState(() {
                     _termoBuscaLocal = termoDigitado;
                   });
@@ -143,13 +167,12 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
               ),
               const SizedBox(height: 25),
 
-              // Aqui está o seu menu de abas (Todos, Lidos, Favoritos...)
               CategoriasMenu(
-                abaSelecionada: _abaSelecionada, // Passa a aba atual
+                abaSelecionada: _abaSelecionada,
                 onAbaSelecionada: (novaAba) {
                   setState(() {
                     _abaSelecionada = novaAba;
-                    _termoBuscaLocal = ''; // Limpa a busca ao trocar de aba!
+                    _termoBuscaLocal = '';
                   });
                 },
               ),
@@ -176,10 +199,8 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                         ),
                       )
                     : _livrosExibidos.isEmpty
-                    // Mostra a sua mensagem bonitinha que nenhum livro foi encontrado
                     ? EmptyStateBiblioteca(
                         onExplorar: () {
-                          // Ação do botão: Voltar para a aba "Todos" limpando a busca
                           setState(() {
                             _abaSelecionada = 'todos';
                             _termoBuscaLocal = '';
@@ -187,8 +208,24 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                         },
                       )
                     : _isGridView
-                    ? BookGrid(livros: _livrosExibidos)
-                    : BookList(livros: _livrosExibidos),
+                    ? BookGrid(
+                        livros: _livrosExibidos,
+                        onUpdateStatus: (id, acao, {valorEmprestimo}) =>
+                            _atualizarStatusLivro(
+                              id,
+                              acao,
+                              valorEmprestimo: valorEmprestimo,
+                            ), // 👉 Conectamos a grade com a função!
+                      )
+                    : BookList(
+                        livros: _livrosExibidos,
+                        onUpdateStatus: (id, acao, {valorEmprestimo}) =>
+                            _atualizarStatusLivro(
+                              id,
+                              acao,
+                              valorEmprestimo: valorEmprestimo,
+                            ), // 👉 Conectamos a lista com a função!
+                      ),
               ),
 
               const SizedBox(height: 17),
