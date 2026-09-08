@@ -14,12 +14,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _indiceAtual = 3; // 3 é a aba da Biblioteca
 
-  // A lista com o "miolo" das telas
-  final List<Widget> _telas = [
+  // 👉 MUDANÇA AQUI: Usamos 'get' para o Flutter permitir o uso do setState aqui dentro!
+  List<Widget> get _telas => [
     const Center(child: Text('Início')),
     const ExplorarScreen(), // <--- Nossa tela do Passo 1 está aqui, no índice 1 (Lupa)
     const Center(child: Text('Adicionar')),
-    const BibliotecaScreen(), // <--- Sua biblioteca continua segura aqui no índice 3
+    BibliotecaScreen(
+      onMudarParaExplorar: () {
+        setState(() {
+          _indiceAtual = 1; // 👉 Ajustado para o nome real da sua variável
+        });
+      },
+    ), // <--- Sua biblioteca continua segura aqui no índice 3
     const Center(child: Text('Perfil')),
   ];
 

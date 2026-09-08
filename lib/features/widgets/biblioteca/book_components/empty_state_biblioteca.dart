@@ -36,7 +36,9 @@ class EmptyStateBiblioteca extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40.0),
             child: Text(
-              'Tente ajustar sua busca ou explore a nossa biblioteca para adicionar novas histórias.',
+              'Que tal descobrir novos livros em Explorar e adicionar novas histórias à sua biblioteca?',
+
+              //'Tente ajustar sua busca ou explore a nossa biblioteca para adicionar novas histórias.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
@@ -67,7 +69,7 @@ class EmptyStateBiblioteca extends StatelessWidget {
             ),
             icon: const Icon(Icons.explore_outlined, size: 18),
             label: Text(
-              'Explorar Biblioteca',
+              'Explorar novas histórias',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

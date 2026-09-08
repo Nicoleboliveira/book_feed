@@ -10,7 +10,8 @@ import '../widgets/biblioteca/book_components/book_list.dart';
 import '../widgets/biblioteca/book_components/empty_state_biblioteca.dart';
 
 class BibliotecaScreen extends StatefulWidget {
-  const BibliotecaScreen({super.key});
+  final VoidCallback onMudarParaExplorar;
+  const BibliotecaScreen({super.key, required this.onMudarParaExplorar});
 
   @override
   State<BibliotecaScreen> createState() => _BibliotecaScreenState();
@@ -214,10 +215,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                     : _livrosExibidos.isEmpty
                     ? EmptyStateBiblioteca(
                         onExplorar: () {
-                          setState(() {
-                            _abaSelecionada = 'todos';
-                            _termoBuscaLocal = '';
-                          });
+                          widget.onMudarParaExplorar();
                         },
                       )
                     : _isGridView
