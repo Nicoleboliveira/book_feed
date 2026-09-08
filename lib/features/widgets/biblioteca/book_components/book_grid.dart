@@ -71,7 +71,7 @@ class BookGrid extends StatelessWidget {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: BotaoStatusLivro(livro: livro, isEstatico: true),
+                    child: IconStatusLivro(livro: livro, isEstatico: true),
                   ),
                 ],
               ),

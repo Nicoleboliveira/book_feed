@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class BotaoStatusLivro extends StatefulWidget {
+class IconStatusLivro extends StatefulWidget {
   final Map<String, dynamic> livro;
   final bool isEstatico;
 
-  const BotaoStatusLivro({
+  const IconStatusLivro({
     super.key,
     required this.livro,
     this.isEstatico = false,
   });
 
   @override
-  State<BotaoStatusLivro> createState() => _BotaoStatusLivroState();
+  State<IconStatusLivro> createState() => _IconStatusLivroState();
 }
 
-class _BotaoStatusLivroState extends State<BotaoStatusLivro> {
+class _IconStatusLivroState extends State<IconStatusLivro> {
   bool _isSelecionado = false;
 
   @override

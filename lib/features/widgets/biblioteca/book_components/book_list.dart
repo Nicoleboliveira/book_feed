@@ -81,7 +81,7 @@ class BookList extends StatelessWidget {
                     right: 4,
                     child: Transform.scale(
                       scale: 0.8,
-                      child: BotaoStatusLivro(livro: livro, isEstatico: true),
+                      child: IconStatusLivro(livro: livro, isEstatico: true),
                     ),
                   ),
                 ],
