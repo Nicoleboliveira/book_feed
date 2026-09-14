@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👉 IMPORTANTE: Adicionado o import do Supabase!
 
 class DiarioLeituraScreen extends StatefulWidget {
   final Map<String, dynamic> livro;
@@ -12,26 +13,19 @@ class DiarioLeituraScreen extends StatefulWidget {
 }
 
 class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
-  // Cor padrão (aquele verde escuro do mockup) caso a capa não carregue
   Color _corFundo = const Color(0xFF38727A);
-
-  // Variável para a avaliação (estrelinhas interativas)
   double _notaUsuario = 0;
-
-  // Controle de expandir a sinopse
   bool _sinopseExpandida = false;
 
   @override
   void initState() {
     super.initState();
-    // Se o livro já tiver uma nota sua no banco, ele carrega aqui
     if (widget.livro['nota'] != null) {
       _notaUsuario = (widget.livro['nota'] as num).toDouble();
     }
     _extrairCorDaCapa();
   }
 
-  // 👉 A MÁGICA DA COR: Lê a imagem e acha a cor principal!
   Future<void> _extrairCorDaCapa() async {
     final String capaUrl =
         widget.livro['capa'] ?? widget.livro['capa_url'] ?? '';
@@ -40,11 +34,38 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
         final PaletteGenerator generator =
             await PaletteGenerator.fromImageProvider(NetworkImage(capaUrl));
         setState(() {
-          // Pega a cor predominante. Se for muito clara ou falhar, mantém a padrão
           _corFundo = generator.dominantColor?.color ?? const Color(0xFF38727A);
         });
       } catch (e) {
         debugPrint('Erro ao extrair cor: $e');
+      }
+    }
+  }
+
+  // ==========================================
+  // 👉 NOVA FUNÇÃO: Salva a nota no Supabase
+  // ==========================================
+  Future<void> _salvarNotaNoBanco(double novaNota) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final String idLivro = widget.livro['id'].toString();
+
+      await supabase
+          .from('meus_livros')
+          .update({'nota': novaNota})
+          .eq('id', idLivro);
+    } catch (e) {
+      debugPrint('Erro ao salvar a nota: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro ao salvar avaliação.',
+              style: GoogleFonts.inter(),
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     }
   }
@@ -58,17 +79,14 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // DefaultTabController gerencia as abas automaticamente
       body: DefaultTabController(
-        length: 5, // 5 abas
+        length: 5,
         child: NestedScrollView(
-          // O Header (Fundo colorido, Capa, Título e Estrelas)
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
               SliverToBoxAdapter(
                 child: _construirCabecalhoELivro(capaUrl, titulo, autor),
               ),
-              // As abas que "grudam" no topo ao rolar a tela
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _SliverAppBarDelegate(
@@ -86,20 +104,19 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
                       fontWeight: FontWeight.w500,
                       fontSize: 14,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     tabs: const [
-                      Tab(text: 'Sobre'),
-                      Tab(text: 'Moodboard'),
-                      Tab(text: 'Playlist'),
-                      Tab(text: 'Review'),
-                      Tab(text: 'Momentos'),
+                      Tab(text: 'sobre'),
+                      Tab(text: 'moodboard'),
+                      Tab(text: 'playlist'),
+                      Tab(text: 'review'),
+                      Tab(text: 'momentos'),
                     ],
                   ),
                 ),
               ),
             ];
           },
-          // O Conteúdo de cada Aba
           body: TabBarView(
             children: [
               _construirAbaSobre(),
@@ -114,10 +131,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
     );
   }
 
-  // ==========================================
-  // COMPONENTES DA TELA
-  // ==========================================
-
   Widget _construirCabecalhoELivro(
     String capaUrl,
     String titulo,
@@ -125,19 +138,16 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   ) {
     return Column(
       children: [
-        // Fundo Colorido e Capa sobreposta
         Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // Bloco de cor predominante
             AnimatedContainer(
               duration: const Duration(milliseconds: 500),
               height: 220,
               width: double.infinity,
               color: _corFundo,
             ),
-            // Botão de Voltar (SafeArea garante que não fica embaixo do relógio do celular)
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
               left: 16,
@@ -150,7 +160,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            // Capa do Livro (Começa no meio do fundo e cai para o branco)
             Positioned(
               top: 80,
               child: Container(
@@ -176,16 +185,13 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
             ),
           ],
         ),
-        // Espaço para a capa que vazou do Stack
         const SizedBox(height: 85),
 
-        // Título e Autor
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
             titulo,
             style: GoogleFonts.inter(
-              // Usando inter com bold para ficar parecido com o mockup
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF261C40),
@@ -203,15 +209,26 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
         ),
         const SizedBox(height: 16),
 
-        // 👉 AVALIAÇÃO INTERATIVA (Estrelinhas clicáveis)
+        // 👉 AVALIAÇÃO INTERATIVA ATUALIZADA
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
             return GestureDetector(
               onTap: () {
+                final double notaClicada = index + 1.0;
+
+                // Se clicou na mesma nota que já estava, zera (0). Se não, assume a nova nota.
+                final double novaNotaFinal = (_notaUsuario == notaClicada)
+                    ? 0.0
+                    : notaClicada;
+
+                // Atualiza a tela instantaneamente (Optimistic UI)
                 setState(() {
-                  _notaUsuario = index + 1.0;
+                  _notaUsuario = novaNotaFinal;
                 });
+
+                // Envia para o Supabase no fundo
+                _salvarNotaNoBanco(novaNotaFinal);
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -229,9 +246,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
     );
   }
 
-  // ==========================================
-  // CONTEÚDO DA ABA "SOBRE"
-  // ==========================================
   Widget _construirAbaSobre() {
     final String sinopse =
         widget.livro['sinopse'] ??
@@ -241,7 +255,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
     return ListView(
       padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 40),
       children: [
-        // --- SINOPSE ---
         Text(
           'Sinopse',
           style: GoogleFonts.inter(
@@ -263,8 +276,7 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
               ? TextOverflow.visible
               : TextOverflow.ellipsis,
         ),
-        if (sinopse.length >
-            150) // Só mostra o botão se a sinopse for grandinha
+        if (sinopse.length > 150)
           GestureDetector(
             onTap: () => setState(() => _sinopseExpandida = !_sinopseExpandida),
             child: Padding(
@@ -282,7 +294,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
 
         const SizedBox(height: 24),
 
-        // --- TAGS (Semelhante ao que fizemos no BookList) ---
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -307,7 +318,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
 
         const SizedBox(height: 32),
 
-        // --- AVALIAÇÕES DA COMUNIDADE (Mockadas/Fake) ---
         Text(
           'Avaliações da comunidade',
           style: GoogleFonts.inter(
@@ -334,7 +344,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
     );
   }
 
-  // Design do cartão de review de outras pessoas
   Widget _construirReviewComunidade(
     String nome,
     int estrelas,
@@ -394,7 +403,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
     );
   }
 
-  // Telas vazias para as outras abas
   Widget _construirAbaEmBreve(String titulo) {
     return Center(
       child: Column(
@@ -435,10 +443,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: Colors.white, // Fundo branco quando a aba grudar no topo
-      child: _tabBar,
-    );
+    return Container(color: Colors.white, child: _tabBar);
   }
 
   @override
