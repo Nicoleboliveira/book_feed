@@ -4,12 +4,37 @@ import 'package:google_fonts/google_fonts.dart';
 class FiltersMenu extends StatelessWidget {
   final bool isGridView;
   final Function(bool) onViewChanged;
+  final String filtroTempoAtual;
+  final Function(String) onFiltroTempoChanged;
+  final List<Map<String, String>> opcoesTempo;
 
   const FiltersMenu({
     super.key,
     required this.isGridView,
     required this.onViewChanged,
+    required this.filtroTempoAtual,
+    required this.onFiltroTempoChanged,
+    required this.opcoesTempo,
   });
+
+  IconData _getIconeParaFiltro(String id) {
+    switch (id) {
+      case 'recentes':
+        return Icons.schedule_outlined;
+      case 'hoje':
+        return Icons.today_outlined;
+      case 'ontem':
+        return Icons.restore_outlined;
+      case 'semana':
+        return Icons.date_range_outlined;
+      case 'mes':
+        return Icons.calendar_month_outlined;
+      case 'ano':
+        return Icons.event_note_outlined;
+      default:
+        return Icons.access_time;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +42,7 @@ class FiltersMenu extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // ==========================================
-        // LADO ESQUERDO: Botões Agrupados (Grade, Estante, Lista)
+        // LADO ESQUERDO: Botões Agrupados (Grade, Lista)
         // ==========================================
         Container(
           padding: const EdgeInsets.all(2),
@@ -27,26 +52,22 @@ class FiltersMenu extends StatelessWidget {
             border: Border.all(color: Colors.grey.shade200),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _construirBotaoFiltro(
                 Icons.grid_view,
                 'Grade',
-                isSelecionado: isGridView, // Aqui usamos a variável dinâmica! Se for true, pinta de roxo.
+                isSelecionado: isGridView,
                 onTap: () {
-                  onViewChanged(
-                    true,
-                  ); // Avisa a tela principal: "Muda pra Grade!"
+                  onViewChanged(true);
                 },
               ),
-
               _construirBotaoFiltro(
                 Icons.format_list_bulleted,
                 'Lista',
-                isSelecionado: !isGridView, // A exclamação inverte: só pinta de roxo se isGridView for false.
+                isSelecionado: !isGridView,
                 onTap: () {
-                  onViewChanged(
-                    false,
-                  ); // Avisa a tela principal: "Muda pra Lista!"
+                  onViewChanged(false);
                 },
               ),
             ],
@@ -54,45 +75,97 @@ class FiltersMenu extends StatelessWidget {
         ),
 
         // ==========================================
-        // LADO DIREITO: "Mais recentes"
+        // LADO DIREITO: Filtro Dinâmico (Compacto e Protegido)
         // ==========================================
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ), // Borda cinza em volta de tudo
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 6),
-              Text(
-                'Mais recentes',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF5A458D),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 160),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isDense: true,
+                isExpanded: true, // Mantemos true para ele truncar textos grandes com "..." sem quebrar a tela
+                value: filtroTempoAtual,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Color(0xFF5A458D),
+                  size: 16,
                 ),
+                iconSize: 16,
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                dropdownColor: Colors.white,
+
+                selectedItemBuilder: (BuildContext context) {
+                  return opcoesTempo.map<Widget>((opcao) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        opcao['label']!,
+                        overflow: TextOverflow.ellipsis, // Coloca "..." se o texto for muito grande
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF5A458D),
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
+
+                onChanged: (String? novoValor) {
+                  if (novoValor != null) {
+                    onFiltroTempoChanged(novoValor);
+                  }
+                },
+
+                items: opcoesTempo.map<DropdownMenuItem<String>>((opcao) {
+                  final isSelected = opcao['id'] == filtroTempoAtual;
+
+                  return DropdownMenuItem<String>(
+                    value: opcao['id'],
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getIconeParaFiltro(opcao['id']!),
+                          size: 16,
+                          color: isSelected
+                              ? const Color(0xFF5A458D)
+                              : const Color(0xFF6E6B78),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            opcao['label']!,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isSelected
+                                  ? const Color(0xFF5A458D)
+                                  : const Color(0xFF6E6B78),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                color: Color(0xFF5A458D),
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-            ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  // ==============================================================
-  // MINI-COMPONENTE: O Botão Individual
-  // ==============================================================
   Widget _construirBotaoFiltro(
     IconData icone,
     String texto, {
@@ -108,6 +181,7 @@ class FiltersMenu extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icone,

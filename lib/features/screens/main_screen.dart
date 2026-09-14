@@ -2,7 +2,7 @@ import 'package:book_feed/shared/custom_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 import 'biblioteca_screen.dart'; // Importa sua biblioteca
-import 'explorar_screen.dart'; // Importa a tela nova (Passo 1)
+import 'explorar_screen.dart'; // Importa a tela explorar
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

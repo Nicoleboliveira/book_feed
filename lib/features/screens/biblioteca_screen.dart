@@ -21,27 +21,18 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   bool _carregando = true;
   bool _isGridView = true;
 
-  // ==========================================
-  // 1. VARIÁVEIS DE CONTROLE LIMPAS
-  // ==========================================
-  List<Map<String, dynamic>> _livrosNuvem = []; // Livros salvos no seu banco
+  List<Map<String, dynamic>> _livrosNuvem = [];
 
-  // 👉 NOVA VARIÁVEL: Guarda o que você digitar na lupa da biblioteca!
   String _termoBuscaLocal = '';
-
-  String _abaSelecionada =
-      'todos'; // Controla as abas (Todos, Lidos, Favoritos)
+  String _abaSelecionada = 'todos';
+  String _filtroTempoSelecionado = 'recentes';
 
   @override
   void initState() {
     super.initState();
-    // Quando o app abre, ele busca a SUA biblioteca no banco!
     _buscarLivrosDaNuvem();
   }
 
-  // ==========================================
-  // 2. FUNÇÃO SUPABASE (Agora em TEMPO REAL!)
-  // ==========================================
   void _buscarLivrosDaNuvem() {
     setState(() => _carregando = true);
 
@@ -67,8 +58,89 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   }
 
   // ==========================================
-  // 👉 NOVA FUNÇÃO: Atualiza o status do livro no banco
+  // 👉 PASSO 1: Isolar os livros da aba atual!
   // ==========================================
+  List<Map<String, dynamic>> get _livrosDaAbaAtual {
+    final abaNormalizada = _abaSelecionada.toLowerCase();
+
+    if (abaNormalizada == 'todos') {
+      return List.from(_livrosNuvem);
+    } else if (abaNormalizada == 'favoritos') {
+      return _livrosNuvem.where((livro) => livro['favorito'] == true).toList();
+    } else if (abaNormalizada == 'emprestados' ||
+        abaNormalizada == 'emprestado') {
+      return _livrosNuvem
+          .where((livro) => livro['emprestado'] == true)
+          .toList();
+    } else {
+      return _livrosNuvem
+          .where((livro) => livro['status'] == abaNormalizada)
+          .toList();
+    }
+  }
+
+  // ==========================================
+  // 👉 PASSO 2: O gerador de menu agora só olha para os livros da aba atual
+  // ==========================================
+  List<Map<String, String>> get _opcoesTempoDisponiveis {
+    List<Map<String, String>> opcoes = [
+      {'id': 'recentes', 'label': 'Mais recentes'},
+    ];
+
+    // 👇 Usamos a nova lista isolada aqui!
+    final livrosBase = _livrosDaAbaAtual;
+
+    if (livrosBase.isEmpty) return opcoes;
+
+    bool temHoje = false;
+    bool temOntem = false;
+    bool temSemana = false;
+    bool temMes = false;
+    bool temAno = false;
+
+    DateTime agora = DateTime.now();
+    DateTime hojeBruto = DateTime(agora.year, agora.month, agora.day);
+    DateTime ontemBruto = hojeBruto.subtract(const Duration(days: 1));
+    DateTime segundaFeira = hojeBruto.subtract(
+      Duration(days: agora.weekday - 1),
+    );
+
+    // Varre apenas os livros que estão visíveis na aba!
+    for (var livro in livrosBase) {
+      String dataStr = livro['created_at'] ?? livro['updated_at'] ?? '';
+      if (dataStr.isEmpty) {
+        temHoje = true;
+        continue;
+      }
+
+      DateTime dtRaw = DateTime.parse(dataStr);
+      DateTime dt = DateTime(
+        dtRaw.toLocal().year,
+        dtRaw.toLocal().month,
+        dtRaw.toLocal().day,
+      );
+
+      if (dt == hojeBruto) temHoje = true;
+      if (dt == ontemBruto) temOntem = true;
+      if (!dt.isBefore(segundaFeira) && !dt.isAfter(hojeBruto))
+        temSemana = true;
+      if (dt.year == agora.year && dt.month == agora.month) temMes = true;
+      if (dt.year == agora.year) temAno = true;
+    }
+
+    if (temHoje) opcoes.add({'id': 'hoje', 'label': 'Adicionados hoje'});
+    if (temOntem) opcoes.add({'id': 'ontem', 'label': 'Adicionados ontem'});
+
+    if (temSemana && agora.weekday >= 3) {
+      opcoes.add({'id': 'semana', 'label': 'Esta semana'});
+    }
+
+    if (temMes) opcoes.add({'id': 'mes', 'label': 'Este mês'});
+    if (temAno) opcoes.add({'id': 'ano', 'label': 'Este ano'});
+
+    return opcoes;
+  }
+
   Future<void> _atualizarStatusLivro(
     String idLivro,
     String acao, {
@@ -76,20 +148,22 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   }) async {
     try {
       final supabase = Supabase.instance.client;
+      final dataAtualizacao = DateTime.now().toUtc().toIso8601String();
 
       if (acao == 'mudar_emprestimo') {
         await supabase
             .from('meus_livros')
-            .update({'emprestado': valorEmprestimo})
+            .update({
+              'emprestado': valorEmprestimo,
+              'updated_at': dataAtualizacao,
+            })
             .eq('id', idLivro);
-      }
-      // 👇 MÁGICA DA EXCLUSÃO AQUI:
-      else if (acao == 'excluir') {
+      } else if (acao == 'excluir') {
         await supabase.from('meus_livros').delete().eq('id', idLivro);
       } else {
         await supabase
             .from('meus_livros')
-            .update({'status': acao})
+            .update({'status': acao, 'updated_at': dataAtualizacao})
             .eq('id', idLivro);
       }
     } catch (erro) {
@@ -98,42 +172,60 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
   }
 
   // ==========================================
-  // 3. O NOVO FILTRO INTELIGENTE (Abas + Busca Local)
+  // 3. O NOVO FILTRO INTELIGENTE TOTAL
   // ==========================================
   List<Map<String, dynamic>> get _livrosExibidos {
-    List<Map<String, dynamic>> filtrados;
+    // 👇 Começamos a filtrar já a partir dos livros da aba atual!
+    List<Map<String, dynamic>> filtrados = _livrosDaAbaAtual;
 
-    // Converte a aba selecionada para minúsculo para evitar erros de digitação (ex: 'Lendo' vira 'lendo')
-    final abaNormalizada = _abaSelecionada.toLowerCase();
+    // --- B. Ordenação Automática (Mais recentes no topo) ---
+    filtrados.sort((a, b) {
+      String dataA = a['updated_at'] ?? a['created_at'] ?? '';
+      String dataB = b['updated_at'] ?? b['created_at'] ?? '';
+      return dataB.compareTo(dataA);
+    });
 
-    if (abaNormalizada == 'todos') {
-      filtrados = _livrosNuvem;
-    } else if (abaNormalizada == 'favoritos') {
-      filtrados = _livrosNuvem
-          .where((livro) => livro['favorito'] == true)
-          .toList();
-    }
-    // 👇 AQUI ESTÁ O SEGREDO DO EMPRESTADO: Ele olha para a coluna booleana!
-    else if (abaNormalizada == 'emprestados' ||
-        abaNormalizada == 'emprestado') {
-      filtrados = _livrosNuvem
-          .where((livro) => livro['emprestado'] == true)
-          .toList();
-    }
-    // 👇 E AQUI FICA A REGRA PRO RESTO (lido, lendo, quero_ler, abandonado)
-    else {
-      filtrados = _livrosNuvem
-          .where((livro) => livro['status'] == abaNormalizada)
-          .toList();
+    // --- C. Filtro de Tempo ---
+    if (_filtroTempoSelecionado != 'recentes') {
+      DateTime agora = DateTime.now();
+      DateTime hoje = DateTime(agora.year, agora.month, agora.day);
+      DateTime segundaFeira = hoje.subtract(Duration(days: agora.weekday - 1));
+
+      filtrados = filtrados.where((livro) {
+        String dataStr = livro['created_at'] ?? livro['updated_at'] ?? '';
+        if (dataStr.isEmpty) {
+          return _filtroTempoSelecionado == 'hoje';
+        }
+
+        DateTime dtRaw = DateTime.parse(dataStr);
+        DateTime dt = DateTime(
+          dtRaw.toLocal().year,
+          dtRaw.toLocal().month,
+          dtRaw.toLocal().day,
+        );
+
+        if (_filtroTempoSelecionado == 'hoje') {
+          return dt == hoje;
+        } else if (_filtroTempoSelecionado == 'ontem') {
+          DateTime ontem = hoje.subtract(const Duration(days: 1));
+          return dt == ontem;
+        } else if (_filtroTempoSelecionado == 'semana') {
+          return !dt.isBefore(segundaFeira) && !dt.isAfter(hoje);
+        } else if (_filtroTempoSelecionado == 'mes') {
+          return dt.year == hoje.year && dt.month == hoje.month;
+        } else if (_filtroTempoSelecionado == 'ano') {
+          return dt.year == hoje.year;
+        }
+        return true;
+      }).toList();
     }
 
-    // Filtro pelo texto digitado na lupa (Busca Local Instantânea!)
+    // --- D. Busca por Texto (Lupa) ---
     if (_termoBuscaLocal.isNotEmpty) {
       filtrados = filtrados.where((livro) {
         final titulo = (livro['titulo'] ?? '').toString().toLowerCase();
         final autor = (livro['autor'] ?? '').toString().toLowerCase();
         final termo = _termoBuscaLocal.toLowerCase();
-
         return titulo.contains(termo) || autor.contains(termo);
       }).toList();
     }
@@ -153,6 +245,15 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
     final int totalQueroLer = _livrosNuvem
         .where((livro) => livro['status'] == 'quero_ler')
         .length;
+
+    // Antes de renderizar, gera as opções disponíveis para a aba atual
+    final opcoesTempo = _opcoesTempoDisponiveis;
+
+    // Verificação de Segurança Oculta: Se a aba atual não suporta o filtro que estava selecionado antes,
+    // nós ajustamos a variável silenciosamente para o build não dar erro de Dropdown nulo.
+    if (!opcoesTempo.any((opcao) => opcao['id'] == _filtroTempoSelecionado)) {
+      _filtroTempoSelecionado = 'recentes';
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -186,12 +287,16 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                 onAbaSelecionada: (novaAba) {
                   setState(() {
                     _abaSelecionada = novaAba;
+
+                    // 👉 PASSO 3: Reseta a lupa e o filtro de tempo ao trocar de aba!
                     _termoBuscaLocal = '';
+                    _filtroTempoSelecionado = 'recentes';
                   });
                 },
               ),
 
               const SizedBox(height: 17),
+
               FiltersMenu(
                 isGridView: _isGridView,
                 onViewChanged: (isGrid) {
@@ -199,12 +304,18 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                     _isGridView = isGrid;
                   });
                 },
+                filtroTempoAtual: _filtroTempoSelecionado,
+                opcoesTempo:
+                    opcoesTempo, // Passa as opções processadas para a aba atual
+                onFiltroTempoChanged: (novoFiltro) {
+                  setState(() {
+                    _filtroTempoSelecionado = novoFiltro;
+                  });
+                },
               ),
+
               const SizedBox(height: 17),
 
-              // ==========================================
-              // 4. RENDERIZAÇÃO DA LISTA CORRETA
-              // ==========================================
               Expanded(
                 child: _carregando
                     ? const Center(
@@ -226,7 +337,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                               id,
                               acao,
                               valorEmprestimo: valorEmprestimo,
-                            ), // 👉 Conectamos a grade com a função!
+                            ),
                       )
                     : BookList(
                         livros: _livrosExibidos,
@@ -235,7 +346,7 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
                               id,
                               acao,
                               valorEmprestimo: valorEmprestimo,
-                            ), // 👉 Conectamos a lista com a função!
+                            ),
                       ),
               ),
 
