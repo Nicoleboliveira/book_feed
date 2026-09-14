@@ -195,6 +195,10 @@ class _ExplorarScreenState extends State<ExplorarScreen> {
             'titulo': livro['titulo'],
             'autor': livro['autor'],
             'capa': livro['capa'],
+            'sinopse':
+                livro['sinopse'] ??
+                livro['description'] ??
+                'Nenhuma sinopse disponível para este livro.',
             'status': status, // 'lido' ou 'quero_ler' (veio do clique!)
             'favorito': false, // Por padrão, começa sem ser favorito
             // Se o seu banco tiver uma coluna para as tags ou notas, você pode adicionar aqui depois!

@@ -89,6 +89,7 @@ class BooksApi {
                 'autor': autor,
                 'tags': tags,
                 'nota': volumeInfo['averageRating'] ?? 0.0,
+                'sinopse': volumeInfo['description'],
               });
             }
           }

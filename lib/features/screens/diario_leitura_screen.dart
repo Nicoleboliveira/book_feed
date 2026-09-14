@@ -1,7 +1,13 @@
+import 'dart:convert';
+
+import 'package:book_feed/features/widgets/biblioteca/diario/aba_sobre.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:palette_generator/palette_generator.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👉 IMPORTANTE: Adicionado o import do Supabase!
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// 👉 IMPORTANTE: Ajuste o caminho abaixo conforme a pasta onde você salvou o aba_sobre.dart
 
 class DiarioLeituraScreen extends StatefulWidget {
   final Map<String, dynamic> livro;
@@ -15,7 +21,11 @@ class DiarioLeituraScreen extends StatefulWidget {
 class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   Color _corFundo = const Color(0xFF38727A);
   double _notaUsuario = 0;
-  bool _sinopseExpandida = false;
+
+  // Variáveis para a API do Google Books (Serão passadas para a AbaSobre)
+  double? _mediaGoogle;
+  int _totalAvaliacoesGoogle = 0;
+  bool _carregandoGoogle = true;
 
   @override
   void initState() {
@@ -24,6 +34,7 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
       _notaUsuario = (widget.livro['nota'] as num).toDouble();
     }
     _extrairCorDaCapa();
+    _buscarDadosGoogleBooks();
   }
 
   Future<void> _extrairCorDaCapa() async {
@@ -43,8 +54,47 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   }
 
   // ==========================================
-  // 👉 NOVA FUNÇÃO: Salva a nota no Supabase
+  // BUSCA DADOS DA GOOGLE BOOKS API
   // ==========================================
+  Future<void> _buscarDadosGoogleBooks() async {
+    final String titulo = widget.livro['titulo'] ?? '';
+    final String autor = widget.livro['autor'] ?? '';
+
+    if (titulo.isEmpty) {
+      setState(() => _carregandoGoogle = false);
+      return;
+    }
+
+    try {
+      final query = Uri.encodeComponent('$titulo $autor');
+      final url = Uri.parse(
+        'https://www.googleapis.com/books/v1/volumes?q=$query&maxResults=1',
+      );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['items'] != null && data['items'].isNotEmpty) {
+          final volumeInfo = data['items'][0]['volumeInfo'];
+
+          setState(() {
+            _mediaGoogle = (volumeInfo['averageRating'] as num?)?.toDouble();
+            _totalAvaliacoesGoogle = (volumeInfo['ratingsCount'] as int?) ?? 0;
+            _carregandoGoogle = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao consultar Google Books API: $e');
+    }
+
+    if (mounted) {
+      setState(() => _carregandoGoogle = false);
+    }
+  }
+
   Future<void> _salvarNotaNoBanco(double novaNota) async {
     try {
       final supabase = Supabase.instance.client;
@@ -56,17 +106,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
           .eq('id', idLivro);
     } catch (e) {
       debugPrint('Erro ao salvar a nota: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erro ao salvar avaliação.',
-              style: GoogleFonts.inter(),
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
     }
   }
 
@@ -119,7 +158,14 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
           },
           body: TabBarView(
             children: [
-              _construirAbaSobre(),
+              // 👉 AQUI A MÁGICA ACONTECE! Chamamos a nossa classe separada.
+              AbaSobre(
+                livro: widget.livro,
+                carregandoGoogle: _carregandoGoogle,
+                mediaGoogle: _mediaGoogle,
+                totalAvaliacoesGoogle: _totalAvaliacoesGoogle,
+              ),
+
               _construirAbaEmBreve('Moodboard'),
               _construirAbaEmBreve('Playlist'),
               _construirAbaEmBreve('Review'),
@@ -186,7 +232,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
           ],
         ),
         const SizedBox(height: 85),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
@@ -204,30 +249,27 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
           autor,
           style: GoogleFonts.inter(
             fontSize: 14,
+            fontWeight: FontWeight.w500,
             color: const Color(0xFF6E6B78),
           ),
         ),
         const SizedBox(height: 16),
 
-        // 👉 AVALIAÇÃO INTERATIVA ATUALIZADA
+        // 👉 AVALIAÇÃO DO USUÁRIO (Estrelas Clicáveis)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
             return GestureDetector(
               onTap: () {
                 final double notaClicada = index + 1.0;
-
-                // Se clicou na mesma nota que já estava, zera (0). Se não, assume a nova nota.
                 final double novaNotaFinal = (_notaUsuario == notaClicada)
                     ? 0.0
                     : notaClicada;
 
-                // Atualiza a tela instantaneamente (Optimistic UI)
                 setState(() {
                   _notaUsuario = novaNotaFinal;
                 });
 
-                // Envia para o Supabase no fundo
                 _salvarNotaNoBanco(novaNotaFinal);
               },
               child: Padding(
@@ -243,163 +285,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
         ),
         const SizedBox(height: 24),
       ],
-    );
-  }
-
-  Widget _construirAbaSobre() {
-    final String sinopse =
-        widget.livro['sinopse'] ??
-        'Nenhuma sinopse disponível para este livro.';
-    final List tags = widget.livro['tags'] ?? ['Romance', 'Ficção'];
-
-    return ListView(
-      padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 40),
-      children: [
-        Text(
-          'Sinopse',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF261C40),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          sinopse,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: const Color(0xFF6E6B78),
-            height: 1.5,
-          ),
-          maxLines: _sinopseExpandida ? null : 4,
-          overflow: _sinopseExpandida
-              ? TextOverflow.visible
-              : TextOverflow.ellipsis,
-        ),
-        if (sinopse.length > 150)
-          GestureDetector(
-            onTap: () => setState(() => _sinopseExpandida = !_sinopseExpandida),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _sinopseExpandida ? 'Ler menos' : 'Ver mais',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF8C79B7),
-                ),
-              ),
-            ),
-          ),
-
-        const SizedBox(height: 24),
-
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: tags.map((tag) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0E5FC),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Text(
-                tag.toString().toLowerCase(),
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF5A458D),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-
-        const SizedBox(height: 32),
-
-        Text(
-          'Avaliações da comunidade',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF261C40),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _construirReviewComunidade(
-          'Mariana Silva',
-          5,
-          'Perfeito! A química deles é absurda, li em um dia só de tão viciante.',
-          'https://i.pravatar.cc/150?img=1',
-        ),
-        const SizedBox(height: 16),
-        _construirReviewComunidade(
-          'Lucas Andrade',
-          4,
-          'Muito bom, a ambientação universitária é muito bem escrita. O final poderia ser menos corrido.',
-          'https://i.pravatar.cc/150?img=11',
-        ),
-      ],
-    );
-  }
-
-  Widget _construirReviewComunidade(
-    String nome,
-    int estrelas,
-    String comentario,
-    String avatarUrl,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundImage: NetworkImage(avatarUrl),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  nome,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: const Color(0xFF261C40),
-                  ),
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    index < estrelas ? Icons.star : Icons.star_border,
-                    color: const Color(0xFF8C79B7),
-                    size: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            comentario,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: const Color(0xFF6E6B78),
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -424,9 +309,6 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   }
 }
 
-// ==========================================
-// DELEGATE PARA GRUDAR AS ABAS NO TOPO
-// ==========================================
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this._tabBar);
 
