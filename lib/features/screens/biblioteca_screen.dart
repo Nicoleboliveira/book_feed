@@ -122,8 +122,9 @@ class _BibliotecaScreenState extends State<BibliotecaScreen> {
 
       if (dt == hojeBruto) temHoje = true;
       if (dt == ontemBruto) temOntem = true;
-      if (!dt.isBefore(segundaFeira) && !dt.isAfter(hojeBruto))
+      if (!dt.isBefore(segundaFeira) && !dt.isAfter(hojeBruto)) {
         temSemana = true;
+      }
       if (dt.year == agora.year && dt.month == agora.month) temMes = true;
       if (dt.year == agora.year) temAno = true;
     }
