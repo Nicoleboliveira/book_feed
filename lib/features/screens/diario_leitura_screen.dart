@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:book_feed/features/widgets/biblioteca/diario/aba_moodboard.dart';
 import 'package:book_feed/features/widgets/biblioteca/diario/aba_sobre.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -165,8 +166,8 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
                 mediaGoogle: _mediaGoogle,
                 totalAvaliacoesGoogle: _totalAvaliacoesGoogle,
               ),
+              AbaMoodboard(livro: widget.livro),
 
-              _construirAbaEmBreve('Moodboard'),
               _construirAbaEmBreve('Playlist'),
               _construirAbaEmBreve('Review'),
               _construirAbaEmBreve('Momentos'),
