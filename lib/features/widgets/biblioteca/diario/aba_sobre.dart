@@ -24,12 +24,22 @@ class AbaSobre extends StatefulWidget {
 class _AbaSobreState extends State<AbaSobre> {
   bool _sinopseExpandida = false;
 
+  // 👉 Função para quebrar o texto corrido em parágrafos organizados
+  String _formatarSinopse(String textoBruto) {
+    return textoBruto
+        .replaceAll('. ', '.\n\n')
+        .replaceAll('? ', '?\n\n')
+        .replaceAll('! ', '!\n\n');
+  }
+
   @override
   Widget build(BuildContext context) {
     // 👉 Puxa a sinopse e tags do Supabase
-    final String sinopse =
+    final String sinopseOriginal =
         widget.livro['sinopse'] ??
         'Nenhuma sinopse disponível para este livro.';
+
+    final String sinopseFormatada = _formatarSinopse(sinopseOriginal);
     final List tags = widget.livro['tags'] ?? ['Romance', 'Ficção'];
 
     return ListView(
@@ -44,21 +54,25 @@ class _AbaSobreState extends State<AbaSobre> {
           ),
         ),
         const SizedBox(height: 12),
+
+        // 👉 Texto com parágrafos formatados e altura de linha elegante
         Text(
-          sinopse,
+          sinopseFormatada,
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF6E6B78),
-            height: 1.5,
+            height: 1.3, // Dá respiro entre as linhas
           ),
-          maxLines: _sinopseExpandida ? null : 4,
+          maxLines: _sinopseExpandida
+              ? null
+              : 6, // Mais linhas visíveis inicialmente
           overflow: _sinopseExpandida
               ? TextOverflow.visible
               : TextOverflow.ellipsis,
         ),
 
-        if (sinopse.length > 150)
+        if (sinopseOriginal.length > 150)
           GestureDetector(
             onTap: () => setState(() => _sinopseExpandida = !_sinopseExpandida),
             child: Padding(
