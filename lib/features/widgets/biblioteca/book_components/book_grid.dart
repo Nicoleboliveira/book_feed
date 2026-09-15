@@ -75,7 +75,12 @@ class BookGrid extends StatelessWidget {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   image: DecorationImage(
-                    image: NetworkImage(livro['capa'] ?? ''),
+                    image: NetworkImage(
+                      (livro['capa'] ?? '').toString().replaceAll(
+                        '&edge=curl',
+                        '',
+                      ),
+                    ),
                     fit: BoxFit.cover,
                   ),
                 ),

@@ -72,7 +72,7 @@ class BookList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       child: capaUrl != null && capaUrl.isNotEmpty
                           ? Image.network(
-                              capaUrl,
+                              capaUrl.replaceAll('&edge=curl', ''),
                               width: 70,
                               height: 105,
                               fit: BoxFit.cover,

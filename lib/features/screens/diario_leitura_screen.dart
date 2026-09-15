@@ -8,8 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:palette_generator/palette_generator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// 👉 IMPORTANTE: Ajuste o caminho abaixo conforme a pasta onde você salvou o aba_sobre.dart
-
 class DiarioLeituraScreen extends StatefulWidget {
   final Map<String, dynamic> livro;
 
@@ -39,8 +37,12 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   }
 
   Future<void> _extrairCorDaCapa() async {
+    // 👇 AQUI A MÁGICA ACONTECE 1/2: Remove a orelha antes de extrair as cores
     final String capaUrl =
-        widget.livro['capa'] ?? widget.livro['capa_url'] ?? '';
+        (widget.livro['capa'] ?? widget.livro['capa_url'] ?? '')
+            .toString()
+            .replaceAll('&edge=curl', '');
+
     if (capaUrl.isNotEmpty) {
       try {
         final PaletteGenerator generator =
@@ -113,10 +115,12 @@ class _DiarioLeituraScreenState extends State<DiarioLeituraScreen> {
   @override
   Widget build(BuildContext context) {
     final String capaUrl =
-        widget.livro['capa'] ?? widget.livro['capa_url'] ?? '';
+        (widget.livro['capa'] ?? widget.livro['capa_url'] ?? '')
+            .toString()
+            .replaceAll('&edge=curl', '');
+
     final String titulo = widget.livro['titulo'] ?? 'Título Desconhecido';
     final String autor = widget.livro['autor'] ?? 'Autor Desconhecido';
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: DefaultTabController(

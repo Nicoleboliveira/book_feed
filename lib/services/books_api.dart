@@ -67,10 +67,9 @@ class BooksApi {
                 imageLinks != null &&
                 imageLinks['thumbnail'] != null &&
                 !titulo.contains('box')) {
-              String capaSegura = imageLinks['thumbnail'].replaceAll(
-                'http:',
-                'https:',
-              );
+              String capaSegura = imageLinks['thumbnail']
+                  .replaceAll('http:', 'https:')
+                  .replaceAll('&edge=curl', '');
 
               // Pegando a categoria (Sem tradução, em inglês original)
               List<String> tags = [];
